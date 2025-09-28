@@ -77,20 +77,35 @@ public class MasterDisasterPredictionService : IMasterDisasterPredictionService
         }
 
         var oldDisasterTypes = await _postgreSqlDbContext.DisasterTypes
+        .Where(dt =>
+            deduplicateDisasterType.Contains(dt.Name)
+        )
+        .ToListAsync();
+        var oldDisasterTypeConfigurations = await _postgreSqlDbContext.RegionDisasterConfigurations
+        .Include(rdc=> rdc.DisasterType)
+        .Where(rdc=>
+            rdc.RegionId == region.Id
+        )
         .AsNoTracking()
         .ToListAsync();
 
-        #region duplciate and new disaster type
+        #region duplciate and new disaster type configuration
         foreach (var disasterType in deduplicateDisasterType)
         {
-            var oldDisasterType = oldDisasterTypes.SingleOrDefault(dt => dt.Name == disasterType);
-            var isInOldDisasterType = oldDisasterType != null;
+            var oldDisasterTypeConfiguration = oldDisasterTypeConfigurations
+            .SingleOrDefault(rdc=>
+                rdc.DisasterType.Name == disasterType
+            );
+            var isInOldDisasterType = oldDisasterTypeConfiguration != null;
             if (isInOldDisasterType) continue;
 
+            var oldDisasterType = oldDisasterTypes.SingleOrDefault(dt=> dt.Name == disasterType);
+            var isOldDisasterType = oldDisasterType != null;
             var newRegionDisasterConfig = new RegionDisasterConfiguration
             {
                 Region = region,
-                DisasterType = new DisasterType
+                DisasterTypeId = isOldDisasterType ? oldDisasterType.Id : 0,
+                DisasterType = isOldDisasterType ? null : new DisasterType
                 {
                     Name = disasterType
                 },
@@ -99,16 +114,16 @@ public class MasterDisasterPredictionService : IMasterDisasterPredictionService
         }
         #endregion
 
-        #region removed disaster type
-        foreach (var oldDisasterType in oldDisasterTypes)
+        #region removed disaster type configuration
+        foreach (var oldDisasterTypeConfiguration in oldDisasterTypeConfigurations)
         {
             var newDisasterType = deduplicateDisasterType
-            .SingleOrDefault(dt => dt == oldDisasterType.Name);
+            .SingleOrDefault(dt => dt == oldDisasterTypeConfiguration.DisasterType.Name);
 
             var isInOldDisasterType = newDisasterType != null;
             if (isInOldDisasterType) continue;
 
-            _postgreSqlDbContext.Remove(oldDisasterType);
+            _postgreSqlDbContext.Remove(oldDisasterTypeConfiguration);
         }
         #endregion
         var rowAffected = await _postgreSqlDbContext.SaveChangesAsync();
