@@ -1,5 +1,6 @@
 using System.Threading.Tasks;
 using Main.Modules.DisasterPredictionModule.Models.Requests;
+using Main.Modules.DisasterPredictionModule.Models.Responses;
 using Main.Modules.DisasterPredictionModule.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -32,6 +33,13 @@ namespace Main.Modules.DisasterPredictionModule
         )
         {
             var result = await _masterDisasterPredictionService.ConfigureRegionAlertSettingAsync(addOrUpdateAlertSettingRequest);
+            return Ok(result);
+        }
+
+        [HttpGet("disaster-risks")]
+        public async Task<ActionResult<IEnumerable<DisasterRiskReport>>> GetDisasterRisksAsync()
+        {
+            var result = await _masterDisasterPredictionService.GetDisasterRisksAsync();
             return Ok(result);
         }
     }

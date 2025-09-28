@@ -60,7 +60,7 @@ public class OpenWeatherClient : IOpenWeatherClient
         var restRequest = new RestRequest(OpenWeatherConfiguration.Path.WeatherDataTimestamp);
         restRequest.AddQueryParameter("lat", lat);
         restRequest.AddQueryParameter("lon", lon);
-        restRequest.AddQueryParameter("dt", dateTime.Ticks);
+        restRequest.AddQueryParameter("dt", dateTime.ToUnixTimeSeconds());
         var result = await _restClient.GetAsync(restRequest);
         var content = JsonSerializer.Deserialize<WeatherDataTimestampResponse>(result.Content, _jsonSerializerOption);
         return content;

@@ -1,19 +1,29 @@
 using System;
+using Main.Common.Persistence.ApiClient;
 using Main.Common.Persistence.DatabaseContext;
 using Main.Modules.DisasterPredictionModule.Entities;
 using Main.Modules.DisasterPredictionModule.Models.Requests;
+using Main.Modules.DisasterPredictionModule.Models;
+using Main.Modules.DisasterPredictionModule.Services.RiskCalculator;
 using Microsoft.EntityFrameworkCore;
+using Main.Modules.DisasterPredictionModule.Models.Responses;
 
 namespace Main.Modules.DisasterPredictionModule.Services;
 
 public class MasterDisasterPredictionService : IMasterDisasterPredictionService
 {
     private readonly PostgreSqlDbContext _postgreSqlDbContext;
+    private readonly IOpenWeatherClient _openWeatherClient;
+    private readonly IRiskCalculatorService _riskCalculatorService;
     public MasterDisasterPredictionService(
-        PostgreSqlDbContext postgreSqlDbContext
+        PostgreSqlDbContext postgreSqlDbContext,
+        IOpenWeatherClient openWeatherClient,
+        IRiskCalculatorService riskCalculatorService
     )
     {
         _postgreSqlDbContext = postgreSqlDbContext;
+        _openWeatherClient = openWeatherClient;
+        _riskCalculatorService = riskCalculatorService;
     }
     public async Task<(bool isSuccess, string message)> AddOrUpdateRegionAsync(
         AddOrUpdateRegionRequest addOrUpdateRegionRequest
@@ -122,8 +132,85 @@ public class MasterDisasterPredictionService : IMasterDisasterPredictionService
         return (true, String.Empty);
     }
 
-    public void GetDisasterRisksAsync()
+    public async Task<IEnumerable<DisasterRiskReport>> GetDisasterRisksAsync()
     {
-        throw new NotImplementedException();
+        var utcNow = DateTimeOffset.UtcNow;
+        var regions = await _postgreSqlDbContext.Regions
+        .AsNoTracking()
+        .ToListAsync();
+        var isNoRegion = !regions.Any();
+        if (isNoRegion) return Enumerable.Empty<DisasterRiskReport>();
+
+        var riskReports = new List<DisasterRiskReport>();
+        foreach (var region in regions)
+        {
+            var regionDisasterTypes = await _postgreSqlDbContext.RegionDisasterConfigurations
+            .AsNoTracking()
+            .Include(rdc=>rdc.DisasterType)
+            .Where(rdc =>
+                rdc.RegionId == region.Id &&
+                rdc.Threshold > 0
+            )
+            .ToListAsync();
+            var weatherData = await _openWeatherClient.CallWeatherDataTimestamp(
+                region.Latitude,
+                region.Longitude,
+                utcNow
+            );
+            foreach (var regionDisasterType in regionDisasterTypes)
+            {
+                if (regionDisasterType.DisasterType.Name.ToLower() == "wildfire")
+                {
+                    var wildfireRiskResult = _riskCalculatorService.CalculateWildfire(new WildfireCalculateMaterial
+                    {
+                        Pressure = weatherData.Data.First().Pressure,
+                        WindDegree = weatherData.Data.First().WindDeg,
+                        WindSpeed = weatherData.Data.First().WindSpeed
+                    });
+                    riskReports.Add(new DisasterRiskReport
+                    {
+                        RegionId = region.Name,
+                        DisasterType = regionDisasterType.DisasterType.Name,
+                        RiskLevel = wildfireRiskResult.riskLevel,
+                        RiskScore = wildfireRiskResult.RiskScore,
+                        AlertTriggered = wildfireRiskResult.RiskScore > regionDisasterType.Threshold
+                    });
+                }
+                else if (regionDisasterType.DisasterType.Name.ToLower() == "earthquake")
+                {
+                    var earthquakeRiskResult = _riskCalculatorService.CalculateEarthquake(new EarthquakeCalculateMaterial
+                    {
+                        WindSpeed = weatherData.Data.First().WindSpeed,
+                        Humidity = weatherData.Data.First().Humidity
+                    });
+                    riskReports.Add(new DisasterRiskReport
+                    {
+                        RegionId = region.Name,
+                        DisasterType = regionDisasterType.DisasterType.Name,
+                        RiskLevel = earthquakeRiskResult.riskLevel,
+                        RiskScore = earthquakeRiskResult.RiskScore,
+                        AlertTriggered = earthquakeRiskResult.RiskScore > regionDisasterType.Threshold
+                    });
+                }
+                else if (regionDisasterType.DisasterType.Name.ToLower() == "flood")
+                {
+                    var floodRiskResult = _riskCalculatorService.CalculateFlood(new FloodRiskCalculateMaterial
+                    {
+                        WindSpeed = weatherData.Data.First().WindSpeed,
+                        WindGust = weatherData.Data.First().WindGust
+                    });
+                    riskReports.Add(new DisasterRiskReport
+                    {
+                        RegionId = region.Name,
+                        DisasterType = regionDisasterType.DisasterType.Name,
+                        RiskLevel = floodRiskResult.riskLevel,
+                        RiskScore = floodRiskResult.RiskScore,
+                        AlertTriggered = floodRiskResult.RiskScore > regionDisasterType.Threshold
+                    });
+                }
+            }
+
+        }
+        return riskReports;
     }
 }

@@ -1,5 +1,6 @@
 using System;
 using Main.Modules.DisasterPredictionModule.Models.Requests;
+using Main.Modules.DisasterPredictionModule.Models.Responses;
 
 namespace Main.Modules.DisasterPredictionModule.Services;
 
@@ -11,5 +12,5 @@ public interface IMasterDisasterPredictionService
     Task<(bool isSuccess, string message)> ConfigureRegionAlertSettingAsync(
         AddOrUpdateAlertSettingRequest addOrUpdateAlertSettingRequest
     );
-    void GetDisasterRisksAsync();
+    Task<IEnumerable<DisasterRiskReport>> GetDisasterRisksAsync();
 }

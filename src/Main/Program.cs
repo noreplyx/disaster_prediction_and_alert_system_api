@@ -1,3 +1,5 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Main.Common.Models;
 using Main.Common.Persistence.ApiClient;
 using Main.Common.Persistence.DatabaseContext;
@@ -18,7 +20,11 @@ builder.Services.AddSingleton<IOpenWeatherClient, OpenWeatherClient>();
 builder.Services.AddSingleton<IRiskCalculatorService, RiskCalculatorService>();
 builder.Services.AddScoped<IMasterDisasterPredictionService, MasterDisasterPredictionService>();
 
-builder.Services.AddControllers();
+builder.Services.AddControllers().AddJsonOptions(config=>
+{
+    config.JsonSerializerOptions.WriteIndented = true;
+    config.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+});
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 

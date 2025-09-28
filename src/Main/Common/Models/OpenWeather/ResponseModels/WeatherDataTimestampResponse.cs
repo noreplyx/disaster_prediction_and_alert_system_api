@@ -26,4 +26,5 @@ public class WeatherData
     public double WindSpeed { get; set; }
     public int WindDeg { get; set; }
     public List<Weather> Weather { get; set; }
+    public double WindGust { get; set; }
 }
