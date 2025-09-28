@@ -29,4 +29,5 @@ public class PostgreSqlDbContext : DbContext
     public DbSet<DisasterType> DisasterTypes { get; set; }
     public DbSet<Region> Regions { get; set; }
     public DbSet<RegionDisasterConfiguration> RegionDisasterConfigurations { get; set; }
+    public DbSet<RegionAlertRecord> RegionAlertRecords { get; set; }
 }
