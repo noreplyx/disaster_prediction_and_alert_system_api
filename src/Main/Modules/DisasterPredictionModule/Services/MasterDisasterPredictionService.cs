@@ -6,7 +6,6 @@ using Main.Modules.DisasterPredictionModule.Models.Requests;
 using Main.Modules.DisasterPredictionModule.Models;
 using Main.Modules.DisasterPredictionModule.Services.RiskCalculator;
 using Microsoft.EntityFrameworkCore;
-using Main.Modules.DisasterPredictionModule.Models;
 using Main.Modules.DisasterPredictionModule.Enums;
 using Main.Modules.DisasterPredictionModule.Services.AlertService;
 using Microsoft.Extensions.Options;
@@ -127,7 +126,7 @@ public class MasterDisasterPredictionService : IMasterDisasterPredictionService
             _postgreSqlDbContext.Remove(oldDisasterTypeConfiguration);
         }
         #endregion
-        var rowAffected = await _postgreSqlDbContext.SaveChangesAsync();
+        await _postgreSqlDbContext.SaveChangesAsync();
         return (true, String.Empty);
     }
 
@@ -159,7 +158,7 @@ public class MasterDisasterPredictionService : IMasterDisasterPredictionService
         {
             regionDisasterConfiguration.Threshold = addOrUpdateAlertSettingRequest.ThresholdScore;
         }
-        var rowAffected = await _postgreSqlDbContext.SaveChangesAsync();
+        await _postgreSqlDbContext.SaveChangesAsync();
         return (true, String.Empty);
     }
 
@@ -285,7 +284,7 @@ public class MasterDisasterPredictionService : IMasterDisasterPredictionService
             newRegionAlertRecords.Add(newRegionAlertRecord);
             _postgreSqlDbContext.Add(newRegionAlertRecord);
         }
-        var rowAffected = await _postgreSqlDbContext.SaveChangesAsync();
+        await _postgreSqlDbContext.SaveChangesAsync();
 
         //* can seperate to queue/worker
         var sendEmailTasks = new List<Task<SendGrid.Response>>();
@@ -299,6 +298,11 @@ public class MasterDisasterPredictionService : IMasterDisasterPredictionService
             sendEmailTasks.Add(alertEmailRes.response);
         }
         await Task.WhenAll(sendEmailTasks);
+        foreach (var newRegionAlertRecord in newRegionAlertRecords)
+        {
+            newRegionAlertRecord.Status = AlertStatus.Complete;
+        }
+        await _postgreSqlDbContext.SaveChangesAsync();
         return (true, String.Empty);
     }
     public async Task<PaginationResponse<AlertDataResponse>> GetRecentAlertListAsync(
