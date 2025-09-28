@@ -13,6 +13,12 @@ using SendGrid.Extensions.DependencyInjection;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOptions<AppSettingModel>().Bind(builder.Configuration);
+builder.Services.AddStackExchangeRedisCache((option) =>
+{
+    option.Configuration = builder.Configuration.GetConnectionString("redis");
+    var redisConfiguration = builder.Configuration.GetSection("Redis");
+    option.InstanceName = redisConfiguration.GetValue<string>("Prefix");
+});
 builder.Services.AddSendGrid((serviceProvider, option) =>
 {
     var appsettingModel = serviceProvider.GetService<IOptions<AppSettingModel>>();

@@ -7,11 +7,25 @@ public class AppSettingModel
     public OpenWeatherConfiguration OpenWeatherConfiguration { get; set; }
     public ConnectionString ConnectionStrings { get; set; }
     public SendGridConfiguration SendGridConfiguration { get; set; }
+    public RedisAppsetting Redis { get; set; }
+}
+public class RedisAppsetting
+{
+    public string Prefix { get; set; }
+    public int ExpirationMinute { get; set; }
+    public TimeSpan ExpirationTimeSpan
+    {
+        get
+        {
+            return TimeSpan.FromMinutes(ExpirationMinute);
+        }
+    }
 }
 
 public class ConnectionString
 {
     public string PostgreSQL { get; set; }
+    public string Redis { get; set; }
 }
 
 public class OpenWeatherConfiguration

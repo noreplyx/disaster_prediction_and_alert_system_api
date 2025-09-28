@@ -12,11 +12,13 @@ using Main.Modules.DisasterPredictionModule.Services.AlertService;
 using Microsoft.Extensions.Options;
 using Main.Common.Models;
 using Main.Modules.DisasterPredictionModule.Models.Responses;
+using Microsoft.Extensions.Caching.Distributed;
 
 namespace Main.Modules.DisasterPredictionModule.Services;
 
 public class MasterDisasterPredictionService : IMasterDisasterPredictionService
 {
+    private readonly IDistributedCache _cache;
     private readonly PostgreSqlDbContext _postgreSqlDbContext;
     private readonly IOpenWeatherClient _openWeatherClient;
     private readonly IRiskCalculatorService _riskCalculatorService;
@@ -27,7 +29,8 @@ public class MasterDisasterPredictionService : IMasterDisasterPredictionService
         IOpenWeatherClient openWeatherClient,
         IRiskCalculatorService riskCalculatorService,
         IAlertService alertService,
-        IOptionsMonitor<AppSettingModel> appSettingModel
+        IOptionsMonitor<AppSettingModel> appSettingModel,
+        IDistributedCache cache
     )
     {
         _postgreSqlDbContext = postgreSqlDbContext;
@@ -35,6 +38,7 @@ public class MasterDisasterPredictionService : IMasterDisasterPredictionService
         _riskCalculatorService = riskCalculatorService;
         _alertService = alertService;
         _appSettingModel = appSettingModel;
+        _cache = cache;
     }
     public async Task<(bool isSuccess, string message)> AddOrUpdateRegionAsync(
         AddOrUpdateRegionRequest addOrUpdateRegionRequest
