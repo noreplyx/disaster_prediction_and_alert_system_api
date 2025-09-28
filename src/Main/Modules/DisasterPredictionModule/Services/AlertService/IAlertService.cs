@@ -10,6 +10,7 @@ public interface IAlertService
         CancellationTokenSource cancellationTokenSource
     ) AlertEmailAsync(
         IEnumerable<string> emailTo,
+        string subject,
         string content
     );
 }

@@ -26,5 +26,11 @@ public class RegionAlertRecordConfiguration : IEntityTypeConfiguration<RegionAle
     public void Configure(EntityTypeBuilder<RegionAlertRecord> builder)
     {
         builder.HasKey(p => p.Id);
+
+        builder.HasIndex(p => new
+        {
+            p.CreateDate,
+            p.RegionId
+        });
     }
 }

@@ -58,11 +58,19 @@ namespace Main.Modules.DisasterPredictionModule
             return Ok();
         }
 
-        // [HttpGet("alerts")]
-        // public async Task<ActionResult<PaginationResponse<DisasterRiskReportResponse>>> EmailAlertAsync()
-        // {
-        //     await _masterDisasterPredictionService.EmailAlertAsync();
-        //     return Ok();
-        // }
+        [HttpGet("alerts")]
+        public async Task<ActionResult<PaginationResponse<DisasterRiskReportResponse>>> GetRecentAlertListAsync(
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 10,
+            [FromQuery] string searchTerm = null
+        )
+        {
+            var recentAlertListPagination = await _masterDisasterPredictionService.GetRecentAlertListAsync(
+                page,
+                pageSize,
+                searchTerm
+            );
+            return Ok(recentAlertListPagination);
+        }
     }
 }

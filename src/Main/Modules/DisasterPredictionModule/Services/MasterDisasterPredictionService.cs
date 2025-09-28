@@ -11,6 +11,7 @@ using Main.Modules.DisasterPredictionModule.Enums;
 using Main.Modules.DisasterPredictionModule.Services.AlertService;
 using Microsoft.Extensions.Options;
 using Main.Common.Models;
+using Main.Modules.DisasterPredictionModule.Models.Responses;
 
 namespace Main.Modules.DisasterPredictionModule.Services;
 
@@ -269,14 +270,69 @@ public class MasterDisasterPredictionService : IMasterDisasterPredictionService
         {
             var alertEmailRes = _alertService.AlertEmailAsync(
                 new List<string> { _appSettingModel.CurrentValue.SendGridConfiguration.EmailTo },
+                "Disaster Alert",
                 newRegionAlertRecord.Content
             );
             sendEmailTasks.Add(alertEmailRes.response);
         }
-        await Task.WhenAll(sendEmailTasks);
+        var sendEmailResponses = await Task.WhenAll(sendEmailTasks);
+        foreach (var r in sendEmailResponses)
+        {
+            var d = await r.Body.ReadAsStringAsync();
+            Console.WriteLine(d);
+        }
     }
-    public void GetRecentListAlert()
+    public async Task<PaginationResponse<AlertDataResponse>> GetRecentAlertListAsync(
+        int page,
+        int pageSize,
+        string searchTerm
+    )
     {
-        // _postgreSqlDbContext
+        var isPaging = pageSize > 0;
+        var isHasSearchTerm = !String.IsNullOrWhiteSpace(searchTerm) && !String.IsNullOrEmpty(searchTerm);
+        var query = _postgreSqlDbContext.RegionAlertRecords
+        .AsNoTracking()
+        .OrderByDescending(rar =>
+            rar.CreateDate
+        )
+        .AsQueryable();
+
+        if (isHasSearchTerm)
+        {
+            query = query.Where(rar =>
+                rar.Region.Name.Contains(searchTerm)
+            );
+        }
+
+        var totalRecord = await query.CountAsync();
+        if (isPaging)
+        {
+            var skipSize = (page - 1) * pageSize;
+            query = query.Skip(skipSize).Take(pageSize);
+        }
+
+        var alertDataRecords = await query.Select(rar => new AlertDataResponse
+        {
+            AlertMessage = rar.Content,
+            DisasterType = rar.DisasterType.Name,
+            RegionId = rar.Region.Name,
+            RiskLevel = rar.RiskLevel,
+            Timestamp = rar.CreateDate,
+            Type = rar.AlertType
+        })
+        .ToListAsync();
+
+        var totalPage = Convert.ToInt32(
+            Math.Ceiling((decimal)totalRecord / (decimal)pageSize)
+        );
+        var paginationResponse = new PaginationResponse<AlertDataResponse>
+        {
+            Data = alertDataRecords,
+            Page = page,
+            PageSize = pageSize,
+            TotalRecord = totalRecord,
+            TotalPage = totalPage
+        };
+        return paginationResponse;
     }
 }

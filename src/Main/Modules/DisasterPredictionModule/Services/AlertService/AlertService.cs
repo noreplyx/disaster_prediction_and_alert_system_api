@@ -31,12 +31,14 @@ public class AlertService : IAlertService
         CancellationTokenSource cancellationTokenSource
     ) AlertEmailAsync(
         IEnumerable<string> emailTo,
+        string subject,
         string content
     )
     {
         var sendGridMessage = new SendGridMessage
         {
             From = new EmailAddress(SendGridConfiguration.EmailFrom),
+            Subject = subject
         };
         foreach (var email in emailTo)
         {
