@@ -8,8 +8,8 @@ public class Region
 {
     public int Id { get; set; }
     public string Name { get; set; }
-    public double Lat { get; set; }
-    public double Lon { get; set; }
+    public double Latitude { get; set; }
+    public double Longitude { get; set; }
 }
 public class RegionConfiguration : IEntityTypeConfiguration<Region>
 {

@@ -1,6 +1,7 @@
 using Main.Common.Models;
 using Main.Common.Persistence.ApiClient;
 using Main.Common.Persistence.DatabaseContext;
+using Main.Modules.DisasterPredictionModule.Services;
 using Main.Modules.DisasterPredictionModule.Services.RiskCalculator;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -15,6 +16,7 @@ builder.Services.AddDbContext<PostgreSqlDbContext>((serviceProvider,option) =>
 });
 builder.Services.AddSingleton<IOpenWeatherClient, OpenWeatherClient>();
 builder.Services.AddSingleton<IRiskCalculatorService, RiskCalculatorService>();
+builder.Services.AddScoped<IMasterDisasterPredictionService, MasterDisasterPredictionService>();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
