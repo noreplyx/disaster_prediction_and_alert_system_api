@@ -176,7 +176,7 @@ public class MasterDisasterPredictionService : IMasterDisasterPredictionService
             {
                 if (regionDisasterType.DisasterType.Name.ToLower() == "wildfire")
                 {
-                    var wildfireRiskResult = _riskCalculatorService.CalculateWildfire(new WildfireCalculateMaterial
+                    var wildfireRiskResult = await _riskCalculatorService.CalculateWildfireAsync(new WildfireCalculateMaterial
                     {
                         Pressure = weatherData.Data.First().Pressure,
                         WindDegree = weatherData.Data.First().WindDeg,
@@ -186,14 +186,14 @@ public class MasterDisasterPredictionService : IMasterDisasterPredictionService
                     {
                         Region = region,
                         DisasterType = regionDisasterType.DisasterType,
-                        RiskLevel = wildfireRiskResult.riskLevel,
+                        RiskLevel = wildfireRiskResult.RiskLevel,
                         RiskScore = wildfireRiskResult.RiskScore,
                         AlertTriggered = wildfireRiskResult.RiskScore > regionDisasterType.Threshold
                     });
                 }
                 else if (regionDisasterType.DisasterType.Name.ToLower() == "earthquake")
                 {
-                    var earthquakeRiskResult = _riskCalculatorService.CalculateEarthquake(new EarthquakeCalculateMaterial
+                    var earthquakeRiskResult = await _riskCalculatorService.CalculateEarthquakeAsync(new EarthquakeCalculateMaterial
                     {
                         WindSpeed = weatherData.Data.First().WindSpeed,
                         Humidity = weatherData.Data.First().Humidity
@@ -202,14 +202,14 @@ public class MasterDisasterPredictionService : IMasterDisasterPredictionService
                     {
                         Region = region,
                         DisasterType = regionDisasterType.DisasterType,
-                        RiskLevel = earthquakeRiskResult.riskLevel,
+                        RiskLevel = earthquakeRiskResult.RiskLevel,
                         RiskScore = earthquakeRiskResult.RiskScore,
                         AlertTriggered = earthquakeRiskResult.RiskScore > regionDisasterType.Threshold
                     });
                 }
                 else if (regionDisasterType.DisasterType.Name.ToLower() == "flood")
                 {
-                    var floodRiskResult = _riskCalculatorService.CalculateFlood(new FloodRiskCalculateMaterial
+                    var floodRiskResult = await _riskCalculatorService.CalculateFloodAsync(new FloodRiskCalculateMaterial
                     {
                         WindSpeed = weatherData.Data.First().WindSpeed,
                         WindGust = weatherData.Data.First().WindGust
@@ -218,7 +218,7 @@ public class MasterDisasterPredictionService : IMasterDisasterPredictionService
                     {
                         Region = region,
                         DisasterType = regionDisasterType.DisasterType,
-                        RiskLevel = floodRiskResult.riskLevel,
+                        RiskLevel = floodRiskResult.RiskLevel,
                         RiskScore = floodRiskResult.RiskScore,
                         AlertTriggered = floodRiskResult.RiskScore > regionDisasterType.Threshold
                     });

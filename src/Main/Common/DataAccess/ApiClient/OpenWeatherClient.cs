@@ -48,7 +48,7 @@ public class OpenWeatherClient : IOpenWeatherClient
     {
         var cacheKey = $"weather-forecast-lat-{lat}-lon-{lon}";
         var cacheData = await _cache.GetStringAsync(cacheKey);
-        var isInCache = cacheData != null;
+        var isInCache = !String.IsNullOrEmpty(cacheData) && !String.IsNullOrWhiteSpace(cacheData);
         if (isInCache)
         {
             var cacheContent = JsonSerializer.Deserialize<CurrentForecastWeatherResponse>(cacheData, _jsonSerializerOption);
@@ -79,7 +79,7 @@ public class OpenWeatherClient : IOpenWeatherClient
     {
         var cacheKey = $"weather-timestamp-lat-{lat}-lon-{lon}";
         var cacheData = await _cache.GetStringAsync(cacheKey);
-        var isInCache = cacheData != null;
+        var isInCache = !String.IsNullOrEmpty(cacheData) && !String.IsNullOrWhiteSpace(cacheData);
         if (isInCache)
         {
             var cacheContent = JsonSerializer.Deserialize<WeatherDataTimestampResponse>(cacheData, _jsonSerializerOption);

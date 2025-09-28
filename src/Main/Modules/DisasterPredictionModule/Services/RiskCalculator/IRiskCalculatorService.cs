@@ -6,23 +6,14 @@ namespace Main.Modules.DisasterPredictionModule.Services.RiskCalculator;
 
 public interface IRiskCalculatorService
 {
-    (
-        RiskLevel riskLevel,
-        double RiskScore
-    ) CalculateFlood(
+    Task<RiskCalculateResult> CalculateFloodAsync(
         FloodRiskCalculateMaterial calculateMaterial
     );
-    (
-        RiskLevel riskLevel,
-        double RiskScore
-    ) CalculateEarthquake(
+    Task<RiskCalculateResult> CalculateEarthquakeAsync(
         EarthquakeCalculateMaterial calculateMaterial
     );
 
-    (
-        RiskLevel riskLevel,
-        double RiskScore
-    ) CalculateWildfire(
+    Task<RiskCalculateResult> CalculateWildfireAsync(
         WildfireCalculateMaterial calculateMaterial
     );
 }
