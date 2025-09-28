@@ -70,6 +70,11 @@ else
 {
     app.UseHttpsRedirection();
 }
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<PostgreSqlDbContext>();
+    await db.Database.MigrateAsync();
+}
 
 app.MapControllers();
 
