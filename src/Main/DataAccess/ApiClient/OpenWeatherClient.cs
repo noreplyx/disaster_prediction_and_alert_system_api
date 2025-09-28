@@ -1,12 +1,12 @@
 using System;
 using System.Text.Json;
 using System.Threading.Tasks;
-using Common.Models;
-using Common.Models.OpenWeather.ResponseModels;
+using Main.Common.Models;
+using Main.Common.Models.OpenWeather.ResponseModels;
 using Microsoft.Extensions.Options;
 using RestSharp;
 
-namespace Common.Persistence.ApiClient;
+namespace Main.Common.Persistence.ApiClient;
 
 public class OpenWeatherClient : IOpenWeatherClient
 {

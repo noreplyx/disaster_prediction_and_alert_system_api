@@ -1,6 +1,5 @@
 using System;
 using System.Threading.Tasks;
-using Common.Persistence.ApiClient;
 using Main.Modules.DisasterPredictionModule.Enums;
 using Main.Modules.DisasterPredictionModule.Models;
 

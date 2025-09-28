@@ -1,6 +1,6 @@
 using System;
 
-namespace Common.Models;
+namespace Main.Common.Models;
 
 public class AppSettingModel
 {

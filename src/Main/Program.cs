@@ -1,10 +1,18 @@
-using Common.Models;
-using Common.Persistence.ApiClient;
+using Main.Common.Models;
+using Main.Common.Persistence.ApiClient;
+using Main.Common.Persistence.DatabaseContext;
 using Main.Modules.DisasterPredictionModule.Services.RiskCalculator;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOptions<AppSettingModel>().Bind(builder.Configuration);
+builder.Services.AddDbContext<PostgreSqlDbContext>((serviceProvider,option) =>
+{
+    // var appsettingModel = serviceProvider.GetService<IOptions<AppSettingModel>>();
+    // option.UseNpgsql(appsettingModel.Value.ConnectionStrings.PostgreSQL);
+});
 builder.Services.AddSingleton<IOpenWeatherClient, OpenWeatherClient>();
 builder.Services.AddSingleton<IRiskCalculatorService, RiskCalculatorService>();
 

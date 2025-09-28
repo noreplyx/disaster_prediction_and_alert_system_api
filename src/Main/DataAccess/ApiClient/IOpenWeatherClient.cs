@@ -1,7 +1,7 @@
 using System;
-using Common.Models.OpenWeather.ResponseModels;
+using Main.Common.Models.OpenWeather.ResponseModels;
 
-namespace Common.Persistence.ApiClient;
+namespace Main.Common.Persistence.ApiClient;
 
 public interface IOpenWeatherClient
 {
