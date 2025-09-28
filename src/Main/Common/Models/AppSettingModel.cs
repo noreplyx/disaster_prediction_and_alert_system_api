@@ -6,6 +6,7 @@ public class AppSettingModel
 {
     public OpenWeatherConfiguration OpenWeatherConfiguration { get; set; }
     public ConnectionString ConnectionStrings { get; set; }
+    public SendGridConfiguration SendGridConfiguration { get; set; }
 }
 
 public class ConnectionString
@@ -25,4 +26,12 @@ public class OpenWeatherConfigurationPath
     public string WeatherDataTimestamp { get; set; }
     public string DailyAggregation { get; set; }
     public string CurrentForecastWeather { get; set; }
+}
+
+public class SendGridConfiguration
+{
+    public string ApiKey { get; set; }
+    public string EmailFrom { get; set; }
+    public string EmailTo { get; set; }
+
 }

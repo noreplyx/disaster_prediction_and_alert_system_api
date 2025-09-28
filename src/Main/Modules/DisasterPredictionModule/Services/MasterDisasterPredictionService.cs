@@ -6,7 +6,11 @@ using Main.Modules.DisasterPredictionModule.Models.Requests;
 using Main.Modules.DisasterPredictionModule.Models;
 using Main.Modules.DisasterPredictionModule.Services.RiskCalculator;
 using Microsoft.EntityFrameworkCore;
-using Main.Modules.DisasterPredictionModule.Models.Responses;
+using Main.Modules.DisasterPredictionModule.Models;
+using Main.Modules.DisasterPredictionModule.Enums;
+using Main.Modules.DisasterPredictionModule.Services.AlertService;
+using Microsoft.Extensions.Options;
+using Main.Common.Models;
 
 namespace Main.Modules.DisasterPredictionModule.Services;
 
@@ -15,15 +19,21 @@ public class MasterDisasterPredictionService : IMasterDisasterPredictionService
     private readonly PostgreSqlDbContext _postgreSqlDbContext;
     private readonly IOpenWeatherClient _openWeatherClient;
     private readonly IRiskCalculatorService _riskCalculatorService;
+    private readonly IAlertService _alertService;
+    private readonly IOptionsMonitor<AppSettingModel> _appSettingModel;
     public MasterDisasterPredictionService(
         PostgreSqlDbContext postgreSqlDbContext,
         IOpenWeatherClient openWeatherClient,
-        IRiskCalculatorService riskCalculatorService
+        IRiskCalculatorService riskCalculatorService,
+        IAlertService alertService,
+        IOptionsMonitor<AppSettingModel> appSettingModel
     )
     {
         _postgreSqlDbContext = postgreSqlDbContext;
         _openWeatherClient = openWeatherClient;
         _riskCalculatorService = riskCalculatorService;
+        _alertService = alertService;
+        _appSettingModel = appSettingModel;
     }
     public async Task<(bool isSuccess, string message)> AddOrUpdateRegionAsync(
         AddOrUpdateRegionRequest addOrUpdateRegionRequest
@@ -89,7 +99,7 @@ public class MasterDisasterPredictionService : IMasterDisasterPredictionService
         {
             var newDisasterType = deduplicateDisasterType
             .SingleOrDefault(dt => dt == oldDisasterType.Name);
-            
+
             var isInOldDisasterType = newDisasterType != null;
             if (isInOldDisasterType) continue;
 
@@ -132,7 +142,7 @@ public class MasterDisasterPredictionService : IMasterDisasterPredictionService
         return (true, String.Empty);
     }
 
-    public async Task<IEnumerable<DisasterRiskReport>> GetDisasterRisksAsync()
+    public async Task<IEnumerable<DisasterRiskReport>> GetDisasterRiskReportsAsync()
     {
         var utcNow = DateTimeOffset.UtcNow;
         var regions = await _postgreSqlDbContext.Regions
@@ -146,7 +156,7 @@ public class MasterDisasterPredictionService : IMasterDisasterPredictionService
         {
             var regionDisasterTypes = await _postgreSqlDbContext.RegionDisasterConfigurations
             .AsNoTracking()
-            .Include(rdc=>rdc.DisasterType)
+            .Include(rdc => rdc.DisasterType)
             .Where(rdc =>
                 rdc.RegionId == region.Id &&
                 rdc.Threshold > 0
@@ -169,8 +179,8 @@ public class MasterDisasterPredictionService : IMasterDisasterPredictionService
                     });
                     riskReports.Add(new DisasterRiskReport
                     {
-                        RegionId = region.Name,
-                        DisasterType = regionDisasterType.DisasterType.Name,
+                        Region = region,
+                        DisasterType = regionDisasterType.DisasterType,
                         RiskLevel = wildfireRiskResult.riskLevel,
                         RiskScore = wildfireRiskResult.RiskScore,
                         AlertTriggered = wildfireRiskResult.RiskScore > regionDisasterType.Threshold
@@ -185,8 +195,8 @@ public class MasterDisasterPredictionService : IMasterDisasterPredictionService
                     });
                     riskReports.Add(new DisasterRiskReport
                     {
-                        RegionId = region.Name,
-                        DisasterType = regionDisasterType.DisasterType.Name,
+                        Region = region,
+                        DisasterType = regionDisasterType.DisasterType,
                         RiskLevel = earthquakeRiskResult.riskLevel,
                         RiskScore = earthquakeRiskResult.RiskScore,
                         AlertTriggered = earthquakeRiskResult.RiskScore > regionDisasterType.Threshold
@@ -201,8 +211,8 @@ public class MasterDisasterPredictionService : IMasterDisasterPredictionService
                     });
                     riskReports.Add(new DisasterRiskReport
                     {
-                        RegionId = region.Name,
-                        DisasterType = regionDisasterType.DisasterType.Name,
+                        Region = region,
+                        DisasterType = regionDisasterType.DisasterType,
                         RiskLevel = floodRiskResult.riskLevel,
                         RiskScore = floodRiskResult.RiskScore,
                         AlertTriggered = floodRiskResult.RiskScore > regionDisasterType.Threshold
@@ -212,5 +222,61 @@ public class MasterDisasterPredictionService : IMasterDisasterPredictionService
 
         }
         return riskReports;
+    }
+    public async Task EmailAlertAsync(
+        RiskLevel minimumAlertRiskLevel = RiskLevel.High
+    )
+    {
+        var disasterRiskReports = await GetDisasterRiskReportsAsync();
+        var needAlertDisasterReports = disasterRiskReports.Where(drr =>
+            drr.RiskLevel >= minimumAlertRiskLevel
+        )
+        .ToList();
+        var isNoNeedAlert = !needAlertDisasterReports.Any();
+        if (isNoNeedAlert) return;
+
+        var utcNow = DateTimeOffset.UtcNow;
+        var newRegionAlertRecords = new List<RegionAlertRecord>();
+        foreach (var riskReport in needAlertDisasterReports)
+        {
+            var newRegionAlertRecord = new RegionAlertRecord
+            {
+                AlertType = AlertType.Email,
+                CreateDate = utcNow,
+                RiskLevel = riskReport.RiskLevel,
+                RiskScore = riskReport.RiskScore,
+                Threshold = riskReport.Threshold,
+                DisasterTypeId = riskReport.DisasterType.Id,
+                RegionId = riskReport.Region.Id,
+                Content = $"""
+                    Region: {riskReport.Region.Name}
+                    DisasterType: {riskReport.DisasterType.Name}
+                    Level: {riskReport.RiskLevel}
+                    Score: {riskReport.RiskScore}
+                    Time: {utcNow}
+                """,
+                UpdateDate = utcNow,
+                Status = AlertStatus.Initial,
+            };
+            newRegionAlertRecords.Add(newRegionAlertRecord);
+            _postgreSqlDbContext.Add(newRegionAlertRecord);
+        }
+        var rowAffected = await _postgreSqlDbContext.SaveChangesAsync();
+
+        //* can seperate to queue/worker
+        var sendEmailTasks = new List<Task<SendGrid.Response>>();
+        foreach (var newRegionAlertRecord in newRegionAlertRecords)
+        {
+            var alertEmailRes = _alertService.AlertEmailAsync(
+                new List<string> { _appSettingModel.CurrentValue.SendGridConfiguration.EmailTo },
+                newRegionAlertRecord.Content
+            );
+            sendEmailTasks.Add(alertEmailRes.response);
+        }
+        await Task.WhenAll(sendEmailTasks);
+    }
+    public void GetRecentListAlert()
+    {
+        // _postgreSqlDbContext
     }
 }

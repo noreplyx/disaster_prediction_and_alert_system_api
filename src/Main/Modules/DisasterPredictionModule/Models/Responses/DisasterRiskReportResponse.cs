@@ -1,13 +1,13 @@
 using System;
 using Main.Modules.DisasterPredictionModule.Enums;
 
-namespace Main.Modules.DisasterPredictionModule.Models;
+namespace Main.Modules.DisasterPredictionModule.Models.Responses;
 
-public class AlertData
+public class DisasterRiskReportResponse
 {
     public string RegionId { get; set; }
     public string DisasterType { get; set; }
+    public double RiskScore { get; set; }
     public RiskLevel RiskLevel { get; set; }
-    public string AlertMessage { get; set; }
-    public DateTimeOffset Timestamp { get; set; }
+    public bool AlertTriggered { get; set; }
 }

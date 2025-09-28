@@ -4,13 +4,20 @@ using Main.Common.Models;
 using Main.Common.Persistence.ApiClient;
 using Main.Common.Persistence.DatabaseContext;
 using Main.Modules.DisasterPredictionModule.Services;
+using Main.Modules.DisasterPredictionModule.Services.AlertService;
 using Main.Modules.DisasterPredictionModule.Services.RiskCalculator;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using SendGrid.Extensions.DependencyInjection;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOptions<AppSettingModel>().Bind(builder.Configuration);
+builder.Services.AddSendGrid((serviceProvider, option) =>
+{
+    var appsettingModel = serviceProvider.GetService<IOptions<AppSettingModel>>();
+    option.ApiKey = appsettingModel.Value.SendGridConfiguration.ApiKey;
+});
 builder.Services.AddDbContext<PostgreSqlDbContext>((serviceProvider,option) =>
 {
     // var appsettingModel = serviceProvider.GetService<IOptions<AppSettingModel>>();
@@ -18,6 +25,7 @@ builder.Services.AddDbContext<PostgreSqlDbContext>((serviceProvider,option) =>
 });
 builder.Services.AddSingleton<IOpenWeatherClient, OpenWeatherClient>();
 builder.Services.AddSingleton<IRiskCalculatorService, RiskCalculatorService>();
+builder.Services.AddSingleton<IAlertService, AlertService>();
 builder.Services.AddScoped<IMasterDisasterPredictionService, MasterDisasterPredictionService>();
 
 builder.Services.AddControllers().AddJsonOptions(config=>

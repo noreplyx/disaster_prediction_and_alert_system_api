@@ -37,10 +37,32 @@ namespace Main.Modules.DisasterPredictionModule
         }
 
         [HttpGet("disaster-risks")]
-        public async Task<ActionResult<IEnumerable<DisasterRiskReport>>> GetDisasterRisksAsync()
+        public async Task<ActionResult<IEnumerable<DisasterRiskReportResponse>>> GetDisasterRiskReportsAsync()
         {
-            var result = await _masterDisasterPredictionService.GetDisasterRisksAsync();
-            return Ok(result);
+            var serviceResult = await _masterDisasterPredictionService.GetDisasterRiskReportsAsync();
+            var apiResult = serviceResult.Select(x => new DisasterRiskReportResponse
+            {
+                AlertTriggered = x.AlertTriggered,
+                DisasterType = x.DisasterType.Name,
+                RegionId = x.Region.Name,
+                RiskScore = x.RiskScore,
+                RiskLevel = x.RiskLevel
+            });
+            return Ok(apiResult);
         }
+
+        [HttpPost("alerts/send")]
+        public async Task<ActionResult<IEnumerable<DisasterRiskReportResponse>>> EmailAlertAsync()
+        {
+            await _masterDisasterPredictionService.EmailAlertAsync();
+            return Ok();
+        }
+
+        // [HttpGet("alerts")]
+        // public async Task<ActionResult<PaginationResponse<DisasterRiskReportResponse>>> EmailAlertAsync()
+        // {
+        //     await _masterDisasterPredictionService.EmailAlertAsync();
+        //     return Ok();
+        // }
     }
 }
