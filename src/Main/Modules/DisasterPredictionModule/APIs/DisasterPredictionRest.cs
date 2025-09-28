@@ -25,7 +25,9 @@ namespace Main.Modules.DisasterPredictionModule
         )
         {
             var result = await _masterDisasterPredictionService.AddOrUpdateRegionAsync(newRegionRequest);
-            return Ok(result);
+            if (result.isSuccess) return Ok("successfully");
+
+            return BadRequest(result.message);
         }
         [HttpPost("alert-settings")]
         public async Task<ActionResult> ConfigureRegionAlertSettingAsync(
@@ -33,7 +35,9 @@ namespace Main.Modules.DisasterPredictionModule
         )
         {
             var result = await _masterDisasterPredictionService.ConfigureRegionAlertSettingAsync(addOrUpdateAlertSettingRequest);
-            return Ok(result);
+            if (result.isSuccess) return Ok("successfully");
+
+            return BadRequest(result.message);
         }
 
         [HttpGet("disaster-risks")]
@@ -54,8 +58,9 @@ namespace Main.Modules.DisasterPredictionModule
         [HttpPost("alerts/send")]
         public async Task<ActionResult<IEnumerable<DisasterRiskReportResponse>>> EmailAlertAsync()
         {
-            await _masterDisasterPredictionService.EmailAlertAsync();
-            return Ok();
+            var emailAlertResult = await _masterDisasterPredictionService.EmailAlertAsync();
+            if (emailAlertResult.isSuccess) return Ok("successfully");
+            return Ok(emailAlertResult.message);
         }
 
         [HttpGet("alerts")]

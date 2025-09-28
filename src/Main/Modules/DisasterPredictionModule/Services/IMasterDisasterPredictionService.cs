@@ -15,7 +15,10 @@ public interface IMasterDisasterPredictionService
         AddOrUpdateAlertSettingRequest addOrUpdateAlertSettingRequest
     );
     Task<IEnumerable<DisasterRiskReport>> GetDisasterRiskReportsAsync();
-    Task EmailAlertAsync(
+    Task<(
+        bool isSuccess,
+        string message
+    )> EmailAlertAsync(
         RiskLevel minimumAlertRiskLevel = RiskLevel.High
     );
     Task<PaginationResponse<AlertDataResponse>> GetRecentAlertListAsync(

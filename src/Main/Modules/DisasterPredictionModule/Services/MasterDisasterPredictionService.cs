@@ -243,7 +243,10 @@ public class MasterDisasterPredictionService : IMasterDisasterPredictionService
         }
         return riskReports;
     }
-    public async Task EmailAlertAsync(
+    public async Task<(
+        bool isSuccess,
+        string message
+    )> EmailAlertAsync(
         RiskLevel minimumAlertRiskLevel = RiskLevel.High
     )
     {
@@ -253,7 +256,7 @@ public class MasterDisasterPredictionService : IMasterDisasterPredictionService
         )
         .ToList();
         var isNoNeedAlert = !needAlertDisasterReports.Any();
-        if (isNoNeedAlert) return;
+        if (isNoNeedAlert) return (false, "Not Need to Alert");
 
         var utcNow = DateTimeOffset.UtcNow;
         var newRegionAlertRecords = new List<RegionAlertRecord>();
@@ -294,12 +297,8 @@ public class MasterDisasterPredictionService : IMasterDisasterPredictionService
             );
             sendEmailTasks.Add(alertEmailRes.response);
         }
-        var sendEmailResponses = await Task.WhenAll(sendEmailTasks);
-        foreach (var r in sendEmailResponses)
-        {
-            var d = await r.Body.ReadAsStringAsync();
-            Console.WriteLine(d);
-        }
+        await Task.WhenAll(sendEmailTasks);
+        return (true, String.Empty);
     }
     public async Task<PaginationResponse<AlertDataResponse>> GetRecentAlertListAsync(
         int page,
