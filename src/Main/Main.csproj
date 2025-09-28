@@ -14,7 +14,7 @@
 
   <ItemGroup>
     <Folder Include="Modules\AlertModule\Models\Requests\" />
-    <Folder Include="Modules\DisasterPredictionModule\Services\" />
+    <Folder Include="Persistence\" />
   </ItemGroup>
 
 </Project>
