@@ -15,6 +15,7 @@ public class OpenWeatherClient : IOpenWeatherClient
     private readonly IOptionsMonitor<AppSettingModel> _appSetting;
     private readonly IRestClient _restClient;
     private readonly JsonSerializerOptions _jsonSerializerOption;
+    private readonly ILogger<OpenWeatherClient> _logger;
 
     private OpenWeatherConfiguration OpenWeatherConfiguration
     {
@@ -26,11 +27,13 @@ public class OpenWeatherClient : IOpenWeatherClient
 
     public OpenWeatherClient(
         IOptionsMonitor<AppSettingModel> appSetting,
-        IDistributedCache cache
+        IDistributedCache cache,
+        ILogger<OpenWeatherClient> logger
     )
     {
         _appSetting = appSetting;
         _cache = cache;
+        _logger = logger;
         var options = new RestClientOptions(OpenWeatherConfiguration.BaseUrl);
         _restClient = new RestClient(options);
         _restClient.AddDefaultQueryParameter("appid", OpenWeatherConfiguration.ApiKey);
@@ -62,20 +65,28 @@ public class OpenWeatherClient : IOpenWeatherClient
         {
             restRequest.AddQueryParameter("exclude", String.Join(',', excludes));
         }
-        var result = await _restClient.GetAsync(restRequest);
-        await _cache.SetStringAsync(
-            cacheKey,
-            result.Content,
-            new DistributedCacheEntryOptions
-            {
-                AbsoluteExpirationRelativeToNow = _appSetting.CurrentValue.Redis.ExpirationTimeSpan
-            }
-        );
-        var content = JsonSerializer.Deserialize<CurrentForecastWeatherResponse>(result.Content, _jsonSerializerOption);
-        return content;
+        try
+        {
+            var result = await _restClient.GetAsync(restRequest);
+            await _cache.SetStringAsync(
+                cacheKey,
+                result.Content,
+                new DistributedCacheEntryOptions
+                {
+                    AbsoluteExpirationRelativeToNow = _appSetting.CurrentValue.Redis.ExpirationTimeSpan
+                }
+            );
+            var content = JsonSerializer.Deserialize<CurrentForecastWeatherResponse>(result.Content, _jsonSerializerOption);
+            return content;
+        }
+        catch (Exception exception)
+        {
+            _logger.LogError("Exception CallCurrentForecastWeatherAsync - {message}", exception.Message);
+        }
+        return null;
     }
 
-    public async Task<WeatherDataTimestampResponse> CallWeatherDataTimestamp(double lat, double lon, DateTimeOffset dateTime)
+    public async Task<WeatherDataTimestampResponse> CallWeatherDataTimestampAsync(double lat, double lon, DateTimeOffset dateTime)
     {
         var cacheKey = $"weather-timestamp-lat-{lat}-lon-{lon}";
         var cacheData = await _cache.GetStringAsync(cacheKey);
@@ -89,16 +100,24 @@ public class OpenWeatherClient : IOpenWeatherClient
         restRequest.AddQueryParameter("lat", lat);
         restRequest.AddQueryParameter("lon", lon);
         restRequest.AddQueryParameter("dt", dateTime.ToUnixTimeSeconds());
-        var result = await _restClient.GetAsync(restRequest);
-        await _cache.SetStringAsync(
-            cacheKey,
-            result.Content,
-            new DistributedCacheEntryOptions
-            {
-                AbsoluteExpirationRelativeToNow = _appSetting.CurrentValue.Redis.ExpirationTimeSpan
-            }
-        );
-        var content = JsonSerializer.Deserialize<WeatherDataTimestampResponse>(result.Content, _jsonSerializerOption);
-        return content;
+        try
+        {
+            var result = await _restClient.GetAsync(restRequest);
+            await _cache.SetStringAsync(
+                cacheKey,
+                result.Content,
+                new DistributedCacheEntryOptions
+                {
+                    AbsoluteExpirationRelativeToNow = _appSetting.CurrentValue.Redis.ExpirationTimeSpan
+                }
+            );
+            var content = JsonSerializer.Deserialize<WeatherDataTimestampResponse>(result.Content, _jsonSerializerOption);
+            return content;
+        }
+        catch (Exception exception)
+        {
+            _logger.LogError("Exception CallCurrentForecastWeatherAsync - {message}", exception.Message);
+        }
+        return null;
     }
 }

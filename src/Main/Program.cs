@@ -9,10 +9,26 @@ using Main.Modules.DisasterPredictionModule.Services.RiskCalculator;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using SendGrid.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOptions<AppSettingModel>().Bind(builder.Configuration);
+
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Debug()
+    .Enrich.FromLogContext()
+    .WriteTo.Console(
+        outputTemplate: "{Timestamp:HH:mm} [{Level}] ({ThreadId}) {Message}{NewLine}{Exception}"
+    )
+    .CreateLogger();
+
+builder.Services.AddLogging(logBuilder =>
+{
+    logBuilder.ClearProviders();
+    logBuilder.AddSerilog(Log.Logger);
+});
 builder.Services.AddStackExchangeRedisCache((option) =>
 {
     option.Configuration = builder.Configuration.GetConnectionString("redis");

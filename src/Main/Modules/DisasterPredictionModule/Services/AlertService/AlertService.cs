@@ -10,6 +10,7 @@ public class AlertService : IAlertService
 {
     private readonly ISendGridClient _sendGridClient;
     private readonly IOptionsMonitor<AppSettingModel> _appSettingModel;
+    private readonly ILogger<AlertService> _logger;
 
     private SendGridConfiguration SendGridConfiguration
     {
@@ -20,11 +21,13 @@ public class AlertService : IAlertService
     }
     public AlertService(
         ISendGridClient sendGridClient,
-        IOptionsMonitor<AppSettingModel> appSettingModel
+        IOptionsMonitor<AppSettingModel> appSettingModel,
+        ILogger<AlertService> logger
     )
     {
         _sendGridClient = sendGridClient;
         _appSettingModel = appSettingModel;
+        _logger = logger;
     }
     public (
         Task<Response> response,

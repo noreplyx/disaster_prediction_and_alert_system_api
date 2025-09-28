@@ -13,12 +13,13 @@ using Microsoft.Extensions.Options;
 using Main.Common.Models;
 using Main.Modules.DisasterPredictionModule.Models.Responses;
 using Microsoft.Extensions.Caching.Distributed;
+using Serilog;
 
 namespace Main.Modules.DisasterPredictionModule.Services;
 
 public class MasterDisasterPredictionService : IMasterDisasterPredictionService
 {
-    private readonly IDistributedCache _cache;
+    private readonly ILogger<MasterDisasterPredictionService> _logger;
     private readonly PostgreSqlDbContext _postgreSqlDbContext;
     private readonly IOpenWeatherClient _openWeatherClient;
     private readonly IRiskCalculatorService _riskCalculatorService;
@@ -30,7 +31,7 @@ public class MasterDisasterPredictionService : IMasterDisasterPredictionService
         IRiskCalculatorService riskCalculatorService,
         IAlertService alertService,
         IOptionsMonitor<AppSettingModel> appSettingModel,
-        IDistributedCache cache
+        ILogger<MasterDisasterPredictionService> logger
     )
     {
         _postgreSqlDbContext = postgreSqlDbContext;
@@ -38,7 +39,7 @@ public class MasterDisasterPredictionService : IMasterDisasterPredictionService
         _riskCalculatorService = riskCalculatorService;
         _alertService = alertService;
         _appSettingModel = appSettingModel;
-        _cache = cache;
+        _logger = logger;
     }
     public async Task<(bool isSuccess, string message)> AddOrUpdateRegionAsync(
         AddOrUpdateRegionRequest addOrUpdateRegionRequest
@@ -182,7 +183,7 @@ public class MasterDisasterPredictionService : IMasterDisasterPredictionService
                 rdc.Threshold > 0
             )
             .ToListAsync();
-            var weatherData = await _openWeatherClient.CallWeatherDataTimestamp(
+            var weatherData = await _openWeatherClient.CallWeatherDataTimestampAsync(
                 region.Latitude,
                 region.Longitude,
                 utcNow

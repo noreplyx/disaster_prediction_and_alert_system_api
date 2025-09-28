@@ -10,7 +10,7 @@ public interface IOpenWeatherClient
         double lon,
         IEnumerable<string> excludes
     );
-    Task<WeatherDataTimestampResponse> CallWeatherDataTimestamp(
+    Task<WeatherDataTimestampResponse> CallWeatherDataTimestampAsync(
         double lat,
         double lon,
         DateTimeOffset dateTime
