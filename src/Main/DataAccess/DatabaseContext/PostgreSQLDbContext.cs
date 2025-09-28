@@ -18,7 +18,12 @@ public class PostgreSqlDbContext : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
-        optionsBuilder.UseNpgsql(_appSettingModel.CurrentValue.ConnectionStrings.PostgreSQL);
+        optionsBuilder
+        .UseNpgsql(_appSettingModel.CurrentValue.ConnectionStrings.PostgreSQL);
+    }
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(PostgreSqlDbContext).Assembly);
     }
 
     public DbSet<DisasterType> DisasterTypes { get; set; }
