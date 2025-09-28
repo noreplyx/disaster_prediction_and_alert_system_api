@@ -1,0 +1,165 @@
+{
+	"info": {
+		"_postman_id": "74bd69e6-be51-4262-9fa6-52e0ac07a47e",
+		"name": "disaster-prediction-and-alert-system-api",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "16500947"
+	},
+	"item": [
+		{
+			"name": "/api/alerts",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/api/alerts",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"alerts"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "/api/regions",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"regionId\": \"R1\",\r\n    \"locationCoordinates\": {\r\n        \"latitude\": 50,\r\n        \"longitude\": 90\r\n    },\r\n    \"disasterTypes\": [\r\n        \"wildfire\"\r\n    ]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/regions",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"regions"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "/api/disaster-risks",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/api/disaster-risks",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"disaster-risks"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "/api/alert-settings",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"regionId\":\"R1\",\r\n    \"disasterType\":\"wildfire\",\r\n    \"thresholdScore\":10\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/alert-settings",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"alert-settings"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "/api/alerts/send",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/api/alerts/send",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"alerts",
+						"send"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "",
+			"type": "default"
+		}
+	]
+}
