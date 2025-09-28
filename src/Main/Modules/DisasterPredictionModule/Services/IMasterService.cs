@@ -5,7 +5,11 @@ namespace Main.Modules.DisasterPredictionModule.Services;
 
 public interface IMasterDisasterPredictionService
 {
-    Task<(bool isSuccess, string message)> AddRegionAsync(NewRegionRequest newRegionRequest);
-    void ConfigureRegionAlertSettingAsync();
+    Task<(bool isSuccess, string message)> AddOrUpdateRegionAsync(
+        AddOrUpdateRegionRequest addOrUpdateRegionRequest
+    );
+    Task<(bool isSuccess, string message)> ConfigureRegionAlertSettingAsync(
+        AddOrUpdateAlertSettingRequest addOrUpdateAlertSettingRequest
+    );
     void GetDisasterRisksAsync();
 }

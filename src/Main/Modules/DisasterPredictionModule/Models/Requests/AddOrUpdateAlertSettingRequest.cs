@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Main.Modules.DisasterPredictionModule.Models.Requests;
 
-public class AlertSettingRequest
+public class AddOrUpdateAlertSettingRequest
 {
     [Required]
     public string RegionId { get; set; }
